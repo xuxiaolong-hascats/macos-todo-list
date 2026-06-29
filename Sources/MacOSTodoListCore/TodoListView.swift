@@ -2,12 +2,17 @@ import SwiftUI
 
 struct TodoListView: View {
     @ObservedObject var store: TodoStore
+    @ObservedObject var settings: AppSettingsStore
     @State private var draftTitle = ""
+    @State private var showsSettings = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
             entryRow
+            if showsSettings {
+                settingsSection
+            }
             Divider()
             todoList
         }
@@ -27,6 +32,14 @@ struct TodoListView: View {
             }
 
             Spacer()
+
+            Button {
+                showsSettings.toggle()
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(.borderless)
+            .help("Settings")
         }
     }
 
@@ -62,6 +75,34 @@ struct TodoListView: View {
                 }
             }
         }
+    }
+
+    private var settingsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Panel opacity")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Text(settings.panelOpacity, format: .number.precision(.fractionLength(2)))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            Slider(
+                value: Binding(
+                    get: { settings.panelOpacity },
+                    set: { settings.setPanelOpacity($0) }
+                ),
+                in: 0...1,
+                step: 0.05
+            )
+        }
+        .padding(10)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var emptyState: some View {

@@ -1,13 +1,15 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
 final class TodoPanelController {
     private let panel: NSPanel
     private let rootView: TodoListView
+    private var settingsCancellable: AnyCancellable?
 
-    init(store: TodoStore) {
-        self.rootView = TodoListView(store: store)
+    init(store: TodoStore, settings: AppSettingsStore) {
+        self.rootView = TodoListView(store: store, settings: settings)
 
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 360, height: 420),
@@ -27,9 +29,14 @@ final class TodoPanelController {
         panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
         panel.standardWindowButton(.zoomButton)?.isHidden = true
         panel.contentView = NSHostingView(rootView: rootView)
+        panel.alphaValue = settings.panelOpacity
         panel.center()
 
         self.panel = panel
+        self.settingsCancellable = settings.$panelOpacity
+            .sink { [weak panel] opacity in
+                panel?.alphaValue = opacity
+            }
     }
 
     func showPanel() {
