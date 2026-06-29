@@ -44,6 +44,26 @@ final class TodoStoreTests: XCTestCase {
         XCTAssertTrue(store.todos.isEmpty)
     }
 
+    func testClearCompletedRemovesOnlyCompletedTodos() throws {
+        let fileURL = try temporaryFileURL()
+        defer {
+            try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent())
+        }
+
+        let store = TodoStore(fileURL: fileURL)
+        store.add(title: "Open")
+        store.add(title: "Done")
+
+        let completedID = try XCTUnwrap(store.todos.first { $0.title == "Done" }?.id)
+        store.setCompleted(completedID, isCompleted: true)
+        store.clearCompleted()
+
+        XCTAssertEqual(store.todos.map(\.title), ["Open"])
+
+        let reloadedStore = TodoStore(fileURL: fileURL)
+        XCTAssertEqual(reloadedStore.todos.map(\.title), ["Open"])
+    }
+
     private func temporaryFileURL() throws -> URL {
         let directoryURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("MacOSTodoListTests-\(UUID().uuidString)", isDirectory: true)

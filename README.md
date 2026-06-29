@@ -21,7 +21,7 @@ swift run MacOSTodoList
 
 The app runs as a menu bar accessory. Use the menu bar checklist icon to show or hide the todo panel, add a todo, reset appearance, or quit.
 
-Use the gear button in the todo panel to adjust panel opacity from `0` to `1` and choose a theme color. If the panel is set fully transparent, use `Reset Appearance` from the menu bar item.
+Use the gear button in the todo panel to adjust panel opacity from `0` to `1` and choose a theme color. The footer can clear completed todos. If the panel is set fully transparent, use `Reset Appearance` from the menu bar item.
 
 ## Test
 

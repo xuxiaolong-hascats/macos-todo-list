@@ -41,6 +41,11 @@ final class TodoStore: ObservableObject {
         save()
     }
 
+    func clearCompleted() {
+        todos.removeAll { $0.isCompleted }
+        save()
+    }
+
     private func load() {
         do {
             let data = try Data(contentsOf: fileURL)
