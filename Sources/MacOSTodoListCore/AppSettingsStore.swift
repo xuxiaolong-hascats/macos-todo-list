@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class AppSettingsStore: ObservableObject {
     @Published private(set) var panelOpacity: Double
+    @Published private(set) var themeColor: ThemeColor
 
     private let fileURL: URL
     private let decoder = JSONDecoder()
@@ -15,10 +16,22 @@ final class AppSettingsStore: ObservableObject {
 
         let settings = Self.loadSettings(from: self.fileURL, decoder: decoder)
         self.panelOpacity = Self.clampedOpacity(settings.panelOpacity)
+        self.themeColor = settings.themeColor
     }
 
     func setPanelOpacity(_ opacity: Double) {
         panelOpacity = Self.clampedOpacity(opacity)
+        save()
+    }
+
+    func setThemeColor(_ themeColor: ThemeColor) {
+        self.themeColor = themeColor
+        save()
+    }
+
+    func resetAppearance() {
+        panelOpacity = AppSettings.defaultValue.panelOpacity
+        themeColor = AppSettings.defaultValue.themeColor
         save()
     }
 
@@ -28,7 +41,7 @@ final class AppSettingsStore: ObservableObject {
                 at: fileURL.deletingLastPathComponent(),
                 withIntermediateDirectories: true
             )
-            let settings = AppSettings(panelOpacity: panelOpacity)
+            let settings = AppSettings(panelOpacity: panelOpacity, themeColor: themeColor)
             let data = try encoder.encode(settings)
             try data.write(to: fileURL, options: [.atomic])
         } catch {

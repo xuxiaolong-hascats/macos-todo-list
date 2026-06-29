@@ -7,22 +7,30 @@ struct TodoListView: View {
     @State private var showsSettings = false
 
     var body: some View {
+        let accentColor = settings.themeColor.color
+
         VStack(alignment: .leading, spacing: 14) {
-            header
-            entryRow
+            header(accentColor: accentColor)
+            entryRow(accentColor: accentColor)
             if showsSettings {
-                settingsSection
+                settingsSection(accentColor: accentColor)
             }
             Divider()
-            todoList
+            todoList(accentColor: accentColor)
         }
         .padding(18)
         .frame(width: 360, height: 420)
         .background(.regularMaterial)
+        .tint(accentColor)
     }
 
-    private var header: some View {
+    private func header(accentColor: Color) -> some View {
         HStack {
+            Circle()
+                .fill(accentColor)
+                .frame(width: 10, height: 10)
+                .shadow(color: accentColor.opacity(0.35), radius: 4, y: 1)
+
             VStack(alignment: .leading, spacing: 3) {
                 Text("Todo List")
                     .font(.headline)
@@ -43,7 +51,7 @@ struct TodoListView: View {
         }
     }
 
-    private var entryRow: some View {
+    private func entryRow(accentColor: Color) -> some View {
         HStack(spacing: 8) {
             TextField("New todo", text: $draftTitle)
                 .textFieldStyle(.roundedBorder)
@@ -52,22 +60,26 @@ struct TodoListView: View {
             Button(action: addTodo) {
                 Image(systemName: "plus")
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .tint(accentColor)
             .keyboardShortcut(.return, modifiers: .command)
             .help("Add todo")
         }
     }
 
-    private var todoList: some View {
+    private func todoList(accentColor: Color) -> some View {
         Group {
             if store.todos.isEmpty {
-                emptyState
+                emptyState(accentColor: accentColor)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(store.todos) { todo in
                             TodoRow(
                                 todo: todo,
-                                store: store
+                                store: store,
+                                accentColor: accentColor
                             )
                         }
                     }
@@ -77,39 +89,58 @@ struct TodoListView: View {
         }
     }
 
-    private var settingsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Panel opacity")
+    private func settingsSection(accentColor: Color) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Panel opacity")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Text(settings.panelOpacity, format: .number.precision(.fractionLength(2)))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+
+                Slider(
+                    value: Binding(
+                        get: { settings.panelOpacity },
+                        set: { settings.setPanelOpacity($0) }
+                    ),
+                    in: 0...1,
+                    step: 0.05
+                )
+                .tint(accentColor)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Theme color")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Spacer()
-
-                Text(settings.panelOpacity, format: .number.precision(.fractionLength(2)))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    ForEach(ThemeColor.allCases) { themeColor in
+                        ThemeColorButton(
+                            themeColor: themeColor,
+                            isSelected: settings.themeColor == themeColor,
+                            action: { settings.setThemeColor(themeColor) }
+                        )
+                    }
+                }
             }
-
-            Slider(
-                value: Binding(
-                    get: { settings.panelOpacity },
-                    set: { settings.setPanelOpacity($0) }
-                ),
-                in: 0...1,
-                step: 0.05
-            )
         }
         .padding(10)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
-    private var emptyState: some View {
+    private func emptyState(accentColor: Color) -> some View {
         VStack(spacing: 8) {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 28))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(accentColor)
             Text("No todos")
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -128,9 +159,39 @@ struct TodoListView: View {
     }
 }
 
+private struct ThemeColorButton: View {
+    let themeColor: ThemeColor
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(themeColor.color)
+                    .frame(width: 20, height: 20)
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .padding(3)
+            .overlay(
+                Circle()
+                    .stroke(isSelected ? themeColor.color : Color.clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+        .help(themeColor.displayName)
+    }
+}
+
 private struct TodoRow: View {
     let todo: TodoItem
     @ObservedObject var store: TodoStore
+    let accentColor: Color
 
     var body: some View {
         HStack(spacing: 8) {
@@ -146,6 +207,7 @@ private struct TodoRow: View {
                     .lineLimit(2)
             }
             .toggleStyle(.checkbox)
+            .tint(accentColor)
 
             Spacer(minLength: 8)
 

@@ -18,8 +18,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             hidePanel: { panelController.hidePanel() },
             togglePanel: { panelController.togglePanel() },
             addTodo: { panelController.showPanelAndFocusEntry() },
-            resetOpacity: {
-                self.settings.setPanelOpacity(1.0)
+            resetAppearance: {
+                self.settings.resetAppearance()
                 panelController.showPanel()
             }
         )
