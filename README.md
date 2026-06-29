@@ -29,6 +29,22 @@ Use the gear button in the todo panel to adjust panel opacity from `0` to `1`. I
 swift test
 ```
 
+## Package A Local DMG
+
+For personal use, build an ad-hoc signed app bundle and DMG:
+
+```sh
+scripts/package-dmg.sh
+```
+
+The generated DMG is written to:
+
+```text
+outputs/MacOSTodoList.dmg
+```
+
+This package is intended for local use. It is not Developer ID signed or notarized.
+
 ## Data
 
 Todos are stored as JSON in:
