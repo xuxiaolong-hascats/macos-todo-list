@@ -44,6 +44,39 @@ final class TodoStoreTests: XCTestCase {
         XCTAssertTrue(store.todos.isEmpty)
     }
 
+    func testUpdateTitleTrimsAndPersists() throws {
+        let fileURL = try temporaryFileURL()
+        defer {
+            try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent())
+        }
+
+        let store = TodoStore(fileURL: fileURL)
+        store.add(title: "Original")
+
+        let id = try XCTUnwrap(store.todos.first?.id)
+        store.updateTitle(id, title: "  Updated title  ")
+
+        XCTAssertEqual(store.todos.first?.title, "Updated title")
+
+        let reloadedStore = TodoStore(fileURL: fileURL)
+        XCTAssertEqual(reloadedStore.todos.first?.title, "Updated title")
+    }
+
+    func testUpdateTitleIgnoresBlankTitles() throws {
+        let fileURL = try temporaryFileURL()
+        defer {
+            try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent())
+        }
+
+        let store = TodoStore(fileURL: fileURL)
+        store.add(title: "Keep me")
+
+        let id = try XCTUnwrap(store.todos.first?.id)
+        store.updateTitle(id, title: "   ")
+
+        XCTAssertEqual(store.todos.first?.title, "Keep me")
+    }
+
     func testClearCompletedRemovesOnlyCompletedTodos() throws {
         let fileURL = try temporaryFileURL()
         defer {

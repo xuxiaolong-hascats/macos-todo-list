@@ -36,6 +36,17 @@ final class TodoStore: ObservableObject {
         save()
     }
 
+    func updateTitle(_ id: TodoItem.ID, title: String) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty,
+              let index = todos.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+
+        todos[index].title = trimmedTitle
+        save()
+    }
+
     func delete(_ id: TodoItem.ID) {
         todos.removeAll { $0.id == id }
         save()

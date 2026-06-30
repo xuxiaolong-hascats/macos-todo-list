@@ -318,11 +318,16 @@ private struct TodoRow: View {
     @ObservedObject var store: TodoStore
     let accentColor: Color
     @State private var isHovering = false
+    @State private var isEditing = false
+    @State private var draftTitle = ""
+    @FocusState private var isTitleFocused: Bool
 
     var body: some View {
         HStack(spacing: 10) {
             Button {
-                store.setCompleted(todo.id, isCompleted: !todo.isCompleted)
+                if !isEditing {
+                    store.setCompleted(todo.id, isCompleted: !todo.isCompleted)
+                }
             } label: {
                 ZStack {
                     Circle()
@@ -341,23 +346,64 @@ private struct TodoRow: View {
                 }
             }
             .buttonStyle(.plain)
+            .disabled(isEditing)
+            .opacity(isEditing ? 0.45 : 1.0)
             .help(todo.isCompleted ? "Mark incomplete" : "Mark complete")
 
-            Text(todo.title)
-                .font(.system(size: 14))
-                .strikethrough(todo.isCompleted)
-                .foregroundStyle(todo.isCompleted ? .secondary : .primary)
-                .lineLimit(2)
+            if isEditing {
+                TextField("Todo title", text: $draftTitle)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 14))
+                    .focused($isTitleFocused)
+                    .onSubmit(saveEdit)
+                    .onExitCommand(perform: cancelEdit)
+                    .onChange(of: isTitleFocused) { _, isFocused in
+                        if !isFocused && isEditing {
+                            saveEdit()
+                        }
+                    }
+                    .onAppear {
+                        isTitleFocused = true
+                    }
+            } else {
+                Text(todo.title)
+                    .font(.system(size: 14))
+                    .strikethrough(todo.isCompleted)
+                    .foregroundStyle(todo.isCompleted ? .secondary : .primary)
+                    .lineLimit(2)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2, perform: startEditing)
+            }
 
             Spacer(minLength: 8)
 
-            Button(action: { store.delete(todo.id) }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 14))
+            if isEditing {
+                HStack(spacing: 7) {
+                    Button(action: saveEdit) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 15))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(accentColor)
+                    .help("Save")
+
+                    Button(action: cancelEdit) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 15))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .help("Cancel")
+                }
+            } else {
+                Button(action: { store.delete(todo.id) }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary.opacity(isHovering ? 0.8 : 0.0))
+                .help("Delete todo")
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary.opacity(isHovering ? 0.8 : 0.0))
-            .help("Delete todo")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -377,5 +423,23 @@ private struct TodoRow: View {
         }
 
         return AnyShapeStyle(.thinMaterial)
+    }
+
+    private func startEditing() {
+        draftTitle = todo.title
+        isEditing = true
+        isTitleFocused = true
+    }
+
+    private func saveEdit() {
+        store.updateTitle(todo.id, title: draftTitle)
+        isEditing = false
+        isTitleFocused = false
+    }
+
+    private func cancelEdit() {
+        draftTitle = todo.title
+        isEditing = false
+        isTitleFocused = false
     }
 }
